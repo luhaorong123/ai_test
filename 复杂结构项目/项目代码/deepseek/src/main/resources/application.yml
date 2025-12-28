@@ -1,0 +1,247 @@
+# application.yml
+spring:
+  application:
+    name: item-management-system
+
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:item_management}?useUnicode=true&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+    hikari:
+      connection-timeout: 30000
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      connection-test-query: SELECT 1
+      pool-name: ItemManagementHikariCP
+
+  # JPA配置
+  jpa:
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update # 开发环境使用update，生产环境建议使用validate
+    show-sql: ${SHOW_SQL:true}
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 20
+        order_inserts: true
+        order_updates: true
+        generate_statistics: false
+      javax:
+        persistence:
+          schema-generation:
+            scripts:
+              action: none
+    open-in-view: false
+
+  # Jackson配置
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd HH:mm:ss
+    serialization:
+      write-dates-as-timestamps: false
+      indent-output: ${JSON_PRETTY_PRINT:false}
+    deserialization:
+      fail-on-unknown-properties: false
+
+# 应用配置
+# application.yml - JWT配置更新
+# 在application.yml中添加物品管理相关配置
+# 在application.yml中添加借阅管理相关配置
+# 在application.yml中添加预警管理相关配置
+app:
+  alert:
+    # 预警配置
+    default-upcoming-days: ${DEFAULT_UPCOMING_DAYS:3}      # 默认即将到期天数
+    severe-overdue-days: ${SEVERE_OVERDUE_DAYS:7}         # 严重逾期天数阈值
+    enable-email-notifications: ${ENABLE_EMAIL_NOTIFICATIONS:false}
+    enable-sms-notifications: ${ENABLE_SMS_NOTIFICATIONS:false}
+    enable-push-notifications: ${ENABLE_PUSH_NOTIFICATIONS:false}
+
+    # 通知模板
+    notification-templates:
+      upcoming:
+        title: "物品即将到期提醒"
+        content: "您借阅的物品《{itemName}》还有{days}天到期，请及时归还。"
+      overdue:
+        title: "物品逾期提醒"
+        content: "您借阅的物品《{itemName}》已逾期{days}天，请尽快归还。"
+      severe-overdue:
+        title: "物品严重逾期提醒"
+        content: "您借阅的物品《{itemName}》已严重逾期{days}天，请立即处理。"
+
+  # 定时任务配置
+  scheduler:
+    alert-upcoming-notifications:
+      enabled: ${ALERT_UPCOMING_NOTIFICATIONS_ENABLED:true}
+      cron: ${ALERT_UPCOMING_NOTIFICATIONS_CRON:0 0 8 * * ?}    # 每天上午8点
+    alert-overdue-notifications:
+      enabled: ${ALERT_OVERDUE_NOTIFICATIONS_ENABLED:true}
+      cron: ${ALERT_OVERDUE_NOTIFICATIONS_CRON:0 0 10 * * ?}    # 每天上午10点
+    alert-daily-report:
+      enabled: ${ALERT_DAILY_REPORT_ENABLED:true}
+      cron: ${ALERT_DAILY_REPORT_CRON:0 0 15 * * ?}             # 每天下午3点
+    alert-status-check:
+      enabled: ${ALERT_STATUS_CHECK_ENABLED:true}
+      cron: ${ALERT_STATUS_CHECK_CRON:0 0 * * * ?}              # 每小时
+    borrow-status-update:
+      enabled: ${BORROW_STATUS_UPDATE_ENABLED:true}
+      cron: ${BORROW_STATUS_UPDATE_CRON:0 0 1 * * ?}      # 每天凌晨1点
+    upcoming-check:
+      enabled: ${UPCOMING_CHECK_ENABLED:true}
+      cron: ${UPCOMING_CHECK_CRON:0 0 9 * * ?}            # 每天上午9点
+    weekly-report:
+      enabled: ${WEEKLY_REPORT_ENABLED:true}
+      cron: ${WEEKLY_REPORT_CRON:0 0 10 ? * MON}          # 每周一上午10点
+    item-status-update:
+      enabled: ${ITEM_STATUS_UPDATE_ENABLED:true}
+      cron: ${ITEM_STATUS_UPDATE_CRON:0 0 2 * * ?}  # 每天凌晨2点
+    status-consistency-check:
+      enabled: ${STATUS_CONSISTENCY_CHECK_ENABLED:true}
+      cron: ${STATUS_CONSISTENCY_CHECK_CRON:0 0 * * * ?}  # 每小时
+
+  borrow:
+    # 借阅配置
+    default-borrow-days: ${DEFAULT_BORROW_DAYS:7}           # 默认借阅天数
+    max-borrow-days: ${MAX_BORROW_DAYS:30}                 # 最大借阅天数
+    max-renew-days: ${MAX_RENEW_DAYS:7}                    # 最大续借天数
+    max-borrow-items: ${MAX_BORROW_ITEMS:5}                # 最大同时借阅物品数
+    alert-days: ${ALERT_DAYS:3}                           # 到期前预警天数
+    daily-fine-rate: ${DAILY_FINE_RATE:1.0}               # 逾期每日罚款率（元）
+    max-overdue-days: ${MAX_OVERDUE_DAYS:90}              # 最大允许逾期天数
+
+    # 功能开关
+    auto-overdue-calculation: ${AUTO_OVERDUE_CALCULATION:true}
+    allow-renew-overdue: ${ALLOW_RENEW_OVERDUE:false}
+    allow-borrow-with-overdue: ${ALLOW_BORROW_WITH_OVERDUE:false}
+    default-days: ${BORROW_DEFAULT_DAYS:7}
+
+  # 定时任务配置
+
+  item:
+    # 物品管理配置
+    max-borrow-days: ${MAX_BORROW_DAYS:30}           # 最大借阅天数
+    auto-recover-days: ${AUTO_RECOVER_DAYS:14}      # 自动恢复天数（维护中->可借）
+    overdue-warning-days: ${OVERDUE_WARNING_DAYS:7} # 逾期预警天数
+
+  # 定时任务配置
+
+
+  user:
+    # 用户管理配置
+    default-password: ${DEFAULT_PASSWORD:password123}  # 用户默认密码
+    max-login-attempts: ${MAX_LOGIN_ATTEMPTS:5}        # 最大登录尝试次数
+    lock-duration-minutes: ${LOCK_DURATION:30}         # 账号锁定时长（分钟）
+
+  # 分页配置
+  pagination:
+    default-page-size: ${DEFAULT_PAGE_SIZE:10}
+    max-page-size: ${MAX_PAGE_SIZE:100}
+
+  # 验证码配置（可选）
+  captcha:
+    enabled: ${CAPTCHA_ENABLED:false}
+    length: ${CAPTCHA_LENGTH:6}
+    expire-seconds: ${CAPTCHA_EXPIRE:300}
+  jwt:
+    secret: ${JWT_SECRET:ItemManagementSystemSecretKeyForJWTTokenGeneration2024}
+    expiration: ${JWT_EXPIRATION:86400000} # 24小时，单位毫秒
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000} # 7天，单位毫秒
+    header: Authorization
+    prefix: Bearer
+
+  # 借阅配置
+
+
+  # 安全配置
+  security:
+    password-strength: ${PASSWORD_STRENGTH:8} # 密码最小长度
+    login-max-attempts: ${LOGIN_MAX_ATTEMPTS:5} # 最大登录尝试次数
+    login-lock-time: ${LOGIN_LOCK_TIME:30} # 登录锁定时间（分钟）
+
+  # 分页配置
+
+
+# 日志配置
+logging:
+  level:
+    com.item.management: ${LOG_LEVEL:INFO}
+    org.springframework.security: ${SECURITY_LOG_LEVEL:WARN}
+    org.hibernate.SQL: ${HIBERNATE_SQL_LOG:DEBUG}
+    org.hibernate.type.descriptor.sql.BasicBinder: ${HIBERNATE_PARAM_LOG:TRACE}
+  file:
+    name: logs/item-management.log
+    max-size: 10MB
+    max-history: 30
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+# 服务配置
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  compression:
+    enabled: true
+    mime-types: text/html,text/xml,text/plain,text/css,text/javascript,application/json,application/javascript
+    min-response-size: 1024
+  error:
+    include-exception: false
+    include-stacktrace: never
+    include-message: always
+
+# SpringDoc OpenAPI配置
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+  packages-to-scan: com.item.management.controller
+  paths-to-match: /api/**
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+# 环境配置
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+logging:
+  level:
+    com.item.management: DEBUG
+    org.springframework.security: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+logging:
+  level:
+    com.item.management: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: false
+    org.hibernate.type.descriptor.sql.BasicBinder: false
